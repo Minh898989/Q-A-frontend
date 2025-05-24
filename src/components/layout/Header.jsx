@@ -128,7 +128,12 @@ export default function Header() {
     const data = await res.json();
 
     if (res.ok) {
-      setDetailedUser(data.data);
+      const detailed = {
+        ...data.data,
+        isLecturer: data.data.role === "lecturer", // ✅ Thêm flag
+      };
+
+      setDetailedUser(detailed);
       setShowProfileModal(true);
     } else {
       toast.error("Không thể tải thông tin người dùng.");
@@ -138,6 +143,7 @@ export default function Header() {
     toast.error("Đã xảy ra lỗi.");
   }
 };
+
 const handleUpdateName = async () => {
   const token = localStorage.getItem("token");
   try {
@@ -151,6 +157,7 @@ const handleUpdateName = async () => {
     });
 
     const data = await res.json();
+    
     if (res.ok) {
       toast.success("Tên đã được cập nhật!");
       setDetailedUser(data.data);
