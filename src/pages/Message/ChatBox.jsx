@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { io } from "socket.io-client";
+import EmojiPicker from 'emoji-picker-react';
+
+import { Smile, Paperclip, Image, Send } from 'lucide-react';
 import axios from "axios";
+
 
 export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }) {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
 
   const messagesContainerRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -237,22 +243,57 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t flex items-center gap-3 bg-white rounded-b-xl">
-        <button onClick={handleAttachFile} title="Tạo file đính kèm" className="p-2 rounded-md hover:bg-blue-100">📎</button>
-        <button onClick={() => imageInputRef.current.click()} title="Tải ảnh lên" className="p-2 rounded-md hover:bg-blue-100">🖼️</button>
-        <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} style={{ display: "none" }} />
-        <textarea
-          ref={inputRef}
-          rows={1}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Nhập tin nhắn..."
-          className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{ maxHeight: 120, fontSize: 16, lineHeight: "1.4em" }}
-        />
-        <button onClick={() => sendMessage(input)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Gửi</button>
-      </div>
+      <div className="p-4 border-t flex items-center gap-3 bg-white rounded-b-xl relative">
+  <button
+    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+    title="Chọn biểu tượng cảm xúc"
+    className="p-2 rounded-md hover:bg-blue-100"
+  >
+    <Smile size={24} className="text-yellow-500" />
+  </button>
+
+  {showEmojiPicker && (
+    <div className="absolute bottom-16 left-4 z-50 shadow-lg">
+      <EmojiPicker
+        onEmojiClick={(emojiData) => {
+          setInput((prev) => prev + emojiData.emoji);
+        }}
+        theme="light"
+        lazyLoadEmojis
+      />
+    </div>
+  )}
+
+  <button onClick={handleAttachFile} title="Tạo file đính kèm" className="p-2 rounded-md hover:bg-blue-100 text-blue-500">
+  <Paperclip size={20} />
+</button>
+
+  <button onClick={() => imageInputRef.current.click()} title="Tải ảnh lên" className="p-2 rounded-md hover:bg-blue-100 text-green-500">
+  <Image size={20} />
+</button>
+
+  <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} style={{ display: "none" }} />
+
+  <textarea
+    ref={inputRef}
+    rows={1}
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={handleKeyPress}
+    placeholder="Nhập tin nhắn..."
+    className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    style={{ maxHeight: 120, fontSize: 16, lineHeight: "1.4em" }}
+  />
+   <button
+  onClick={() => sendMessage(input)}
+  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+>
+  <Send />
+  
+</button>
+
+</div>
+
     </div>
   );
 }
