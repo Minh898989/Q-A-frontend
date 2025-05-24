@@ -1,13 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { GrLogout } from "react-icons/gr";
+import { GrLogout,GrEdit, GrCheckmark, GrClose,  } from "react-icons/gr";
+import { FaKey,  FaCheckCircle } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [totalNotifications, setTotalNotifications] = useState(0);
-  
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [detailedUser, setDetailedUser] = useState(null);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const navigate = useNavigate();
   const location = useLocation();
   const socketRef = useRef(null);
@@ -111,8 +120,109 @@ export default function Header() {
       toast.error("Lỗi khi upload ảnh");
     }
   };
+  const fetchUserDetails = async () => {
+  if (!user?.id) return;
+
+  try {
+    const res = await fetch(`http://localhost:3009/api/users/${user.id}`);
+    const data = await res.json();
+
+    if (res.ok) {
+      setDetailedUser(data.data);
+      setShowProfileModal(true);
+    } else {
+      toast.error("Không thể tải thông tin người dùng.");
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết user:", error);
+    toast.error("Đã xảy ra lỗi.");
+  }
+};
+const handleUpdateName = async () => {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`http://localhost:3009/api/users/${user.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name: newName }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      toast.success("Tên đã được cập nhật!");
+      setDetailedUser(data.data);
+      setUser(data.data);
+      setEditingName(false);
+    } else {
+      toast.error(data.message || "Cập nhật thất bại");
+    }
+  } catch (err) {
+    console.error("Lỗi khi cập nhật tên:", err);
+    toast.error("Đã xảy ra lỗi.");
+  }
+};
+const handleChangePassword = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    toast.error("Vui lòng nhập đầy đủ thông tin.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    toast.error("Mật khẩu mới không khớp.");
+    return;
+  }
+
+  try {
+    // Bước 1: Xác thực lại mật khẩu hiện tại bằng email
+    const loginRes = await fetch("http://localhost:3009/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email, // dùng email thay vì username
+        password: currentPassword,
+      }),
+    });
+
+    if (!loginRes.ok) {
+      toast.error("Mật khẩu hiện tại không đúng.");
+      return;
+    }
+
+    // Bước 2: Gửi yêu cầu đổi mật khẩu
+    const res = await fetch(`http://localhost:3009/api/users/${user.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ password_hash: newPassword }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      toast.success("Đổi mật khẩu thành công!");
+      setShowChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      toast.error(data.message || "Đổi mật khẩu thất bại");
+    }
+  } catch (err) {
+    console.error("Lỗi khi đổi mật khẩu:", err);
+    toast.error("Đã xảy ra lỗi.");
+  }
+};
+
 
   return (
+    <>
     <header className="bg-white bg-opacity-90 backdrop-blur-sm shadow-md sticky top-0 z-50 font-varela">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <a href="/" className="flex items-center space-x-3 group">
@@ -168,14 +278,152 @@ export default function Header() {
                 <input type="file" accept="image/*" id="avatar-upload" onChange={handleFileChange} className="hidden" />
               </div>
 
-              <span className="text-blue-700 font-semibold">
+              <span className="text-blue-700 font-semibold"
+                    onClick={fetchUserDetails}>
                 Xin chào, <strong>{user.name}</strong>
               </span>
               <GrLogout onClick={handleLogout} style={{ fontSize: "20px", color: "red", cursor: "pointer" }} title="Đăng xuất" />
             </div>
           )}
+          
         </div>
       </div>
+      
     </header>
+    {showProfileModal && detailedUser && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+
+      {/* Nút đóng */}
+      <button
+        className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
+        onClick={() => setShowProfileModal(false)}
+      >
+        ✕
+      </button>
+
+      <div className="flex flex-col items-center text-center space-y-3">
+        {/* Avatar */}
+        <div className="relative">
+          <img
+            src={detailedUser.avt || "/default-avatar.png"}
+            alt="avatar"
+            className="w-24 h-24 rounded-full object-cover border-4 border-blue-400 shadow"
+          />
+          <span
+            className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white ${
+              detailedUser.is_active ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></span>
+        </div>
+
+        {/* Tên + biểu tượng sửa */}
+        <div className="flex items-center gap-2">
+          {editingName ? (
+            <>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              />
+              <button onClick={handleUpdateName} title="Lưu">
+                <GrCheckmark className="text-green-600 hover:text-green-800" />
+
+              </button>
+              <button
+                onClick={() => {
+                  setEditingName(false);
+                  setNewName("");
+                }}
+                title="Hủy"
+              >
+                <GrClose className="text-red-500 hover:text-red-700" />
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold text-blue-700">{detailedUser.name}</h2>
+              <button
+                onClick={() => {
+                  setEditingName(true);
+                  setNewName(detailedUser.name);
+                }}
+                title="Sửa tên"
+              >
+                <GrEdit className="text-blue-500 hover:text-blue-700" />
+              </button>
+            </>
+          )}
+        </div>
+
+        <p className="text-sm text-gray-600">{detailedUser.email}</p>
+
+        {/* Thông tin thêm */}
+        <div className="w-full mt-4 space-y-2 text-left text-sm text-gray-700 px-4">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-500">🎓</span>
+            <span><strong>Vai trò:</strong> {detailedUser.role}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-purple-500">📅</span>
+            <span><strong>Ngày tạo:</strong> {new Date(detailedUser.created_at).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-500">🟢</span>
+            <span>
+              <strong>Trạng thái:</strong>{" "}
+              <span className={detailedUser.is_active ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                {detailedUser.is_active ? "Đang hoạt động" : "Bị khóa"}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Đổi mật khẩu toggle */}
+        <button
+          onClick={() => setShowChangePassword(!showChangePassword)}
+          className="text-sm text-blue-600 hover:text-blue-800 mt-3 flex items-center gap-1"
+        >
+          <FaKey /> Đổi mật khẩu
+        </button>
+
+        {/* Form đổi mật khẩu */}
+        {showChangePassword && (
+          <div className="mt-2 space-y-2 w-full">
+            <input
+  type="password"
+  placeholder="Mật khẩu hiện tại"
+  value={currentPassword}
+  onChange={(e) => setCurrentPassword(e.target.value)}
+/>
+<input
+  type="password"
+  placeholder="Mật khẩu mới"
+  value={newPassword}
+  onChange={(e) => setNewPassword(e.target.value)}
+/>
+<input
+  type="password"
+  placeholder="Xác nhận mật khẩu mới"
+  value={confirmPassword}
+  onChange={(e) => setConfirmPassword(e.target.value)}
+/>
+
+            <button
+              onClick={handleChangePassword}
+              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 flex items-center justify-center gap-2"
+            >
+              < FaCheckCircle /> Xác nhận đổi
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+
+    </>
   );
 }
