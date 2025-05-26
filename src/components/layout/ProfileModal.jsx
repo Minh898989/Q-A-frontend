@@ -4,14 +4,14 @@ import { FaKey } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { MdWork, MdCalendarToday, MdCheckCircle, MdCancel } from "react-icons/md";
 
-export default function ProfileModal({ detailedUser, setShowProfileModal, setUser, setDetailedUser }) {
+export default function ProfileModal({ detailedUser, setShowProfileModal, setUser, setDetailedUser  }) {
     const [editingName, setEditingName] = useState(false);
     const [newName, setNewName] = useState("");
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [setIsUploading] = useState(false);
+    const [, setIsUploading] = useState(false);
 
     const handleUpdateName = async () => {
         const token = localStorage.getItem("token");

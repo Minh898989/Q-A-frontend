@@ -10,6 +10,7 @@ export default function Header() {
   const [totalNotifications, setTotalNotifications] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [detailedUser, setDetailedUser] = useState(null);
+  
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -187,6 +188,7 @@ export default function Header() {
           setShowProfileModal={setShowProfileModal}
           setUser={setUser}
           setDetailedUser={setDetailedUser}
+           
         />
       )}
     </>
