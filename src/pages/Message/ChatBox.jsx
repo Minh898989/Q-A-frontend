@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useCall } from "./CallContext"; 
 import { io } from "socket.io-client";
 import EmojiPicker from 'emoji-picker-react';
-
-import { Smile, Paperclip, Image, Send } from 'lucide-react';
+import { Smile, Paperclip, Image, Send,Video  } from 'lucide-react';
 import axios from "axios";
 
 export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }) {
@@ -10,11 +10,11 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
+  const { startCall } = useCall();;
   const messagesContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const inputRef = useRef(null);
-
+ 
   const socket = useMemo(() => io("http://localhost:3009"), []);
 
   useEffect(() => {
@@ -194,20 +194,36 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
   if (!userId) return <div className="text-center p-4">Đang tải...</div>;
 
   return (
+    <>
     <div
       className="flex flex-col w-full max-w-screen-lg mx-auto border rounded-xl shadow-2xl bg-gradient-to-br from-blue-50 to-white"
       style={{ height: 'calc(100vh - 110px)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", overflow: 'hidden' }}
     >
       <div
-        className="flex items-center gap-4 px-5"
-        style={{ height: 60, background: "linear-gradient(90deg, #2c7be5, #1c54b2)" }}
+  className="flex items-center justify-between px-5"
+  style={{ height: 60, background: "linear-gradient(90deg, #2c7be5, #1c54b2)" }}
+>
+  
+  <div className="flex items-center gap-4">
+    <div className="relative group">
+      <img src={friend.avt} alt={friend.name} className="w-12 h-12 rounded-full border-2 border-white shadow-lg group-hover:scale-110 transition-transform" />
+      <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-green-400 animate-pulse" title="Online" />
+    </div>
+    <div className="text-white font-extrabold text-xl">{friend.name}</div>
+  </div>
+
+ 
+  <button
+        onClick={() => startCall(friend)}  // gọi cuộc gọi qua context
+        className="text-white hover:bg-blue-500 p-2 rounded-full transition"
+        title="Gọi điện"
       >
-        <div className="relative group">
-          <img src={friend.avt} alt={friend.name} className="w-12 h-12 rounded-full border-2 border-white shadow-lg group-hover:scale-110 transition-transform" />
-          <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-green-400 animate-pulse" title="Online" />
-        </div>
-        <div className="text-white font-extrabold text-xl">{friend.name}</div>
-      </div>
+        <Video size={24} />
+      </button>
+
+</div>
+
+      
 
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 bg-gray-100 space-y-4">
         {messages.map((msg, i) => (
@@ -273,6 +289,7 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
           className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           style={{ maxHeight: 120, fontSize: 16, lineHeight: "1.4em" }}
         />
+         
         <button
           onClick={() => sendMessage(input)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -282,5 +299,8 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
         </button>
       </div>
     </div>
+    
+    </>
   );
+  
 }
