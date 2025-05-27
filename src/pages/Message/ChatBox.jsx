@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useCall } from "./CallContext"; 
+
 import { io } from "socket.io-client";
 import EmojiPicker from 'emoji-picker-react';
 import { Smile, Paperclip, Image, Send,Video  } from 'lucide-react';
@@ -10,7 +10,7 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const { startCall } = useCall();;
+  
   const messagesContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const inputRef = useRef(null);
@@ -214,7 +214,7 @@ export default function ChatBox({ friend, initialMessages = [], onMarkedAsRead }
 
  
   <button
-        onClick={() => startCall(friend)}  // gọi cuộc gọi qua context
+         
         className="text-white hover:bg-blue-500 p-2 rounded-full transition"
         title="Gọi điện"
       >

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import ChatBox from './ChatBox';
-
+import VideoCallModal from './VideoCall';
 export default function FriendSearch() {
   const [tab, setTab] = useState("search");
   const [query, setQuery] = useState("");
@@ -14,7 +14,7 @@ export default function FriendSearch() {
   const [incomingCount, setIncomingCount] = useState(0);
   const [unreadCounts, setUnreadCounts] = useState({});
   const [totalUnread, setTotalUnread] = useState(0);
-
+  const [isCalling, setIsCalling] = useState(false);
   useEffect(() => {
     const fetchCurrentUserId = async () => {
       try {
@@ -319,12 +319,20 @@ export default function FriendSearch() {
                         {unreadCounts[friend.id]}
                       </span>
                     )}
+                    
                   </div>
                 ))
               )}
 
             </div>
           )}
+          <button
+  onClick={() => setIsCalling(true)}
+  className="flex items-center justify-center gap-2 w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition shadow font-medium"
+>
+  📹 Gọi video
+</button>
+
         </div>
       </div>
 
@@ -346,7 +354,13 @@ export default function FriendSearch() {
               : "Chọn một tab để quản lý bạn bè..."}
           </div>
         )}
+        
       </div>
+      <VideoCallModal
+  isOpen={isCalling}
+  onClose={() => setIsCalling(false)}
+  friend={selectedFriend}
+/>
 
     </div>
   );

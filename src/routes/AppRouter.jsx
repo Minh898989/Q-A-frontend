@@ -1,8 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CallProvider, useCall } from "../pages/Message/CallContext";
 import RegisterForm from '../pages/Form/RegisterForm';
 import GoogleAuthHandler from '../pages/Form/GoogleAuthHandler';
-
 import LoginForm from '../pages/Form/LoginForm';
 import ForgotPassword from '../pages/Form/ForgotPassword';
 import HomePage from '../pages//Home/HomePage';
@@ -15,14 +13,12 @@ import ResetPassword from '../pages/Admin/ResetPassword';
 import Post from '../pages/Forum/Post';
 import Group from '../pages/Forum/Group';
 import MessagePage from '../pages/Message/MessagePage';
-import CallModal from '../pages/Message/CallModal';
-const GlobalCallModal = () => {
-  const { isCalling, friend, endCall } = useCall();
-  if (!isCalling || !friend) return null;
-  return <CallModal friend={friend} onClose={endCall} />;
-};
+import VideoCallRoom from '../pages/Message/VideoCallRoom'; // Đường dẫn này chỉnh lại theo đúng project bạn
+
+;
+
 const AppRouter = () => (
-<CallProvider>
+
   <Router>
     <Routes>
       <Route path="/login" element={<LoginForm />} />
@@ -37,7 +33,7 @@ const AppRouter = () => (
         <Route path="group" element={<Group />} />
       </Route>
       <Route path="/message" element={<MessagePage />} />
-      
+      <Route path="/video-call/:roomId" element={<VideoCallRoom />} />
       <Route
         path="/admin"
         element={
@@ -51,9 +47,9 @@ const AppRouter = () => (
         <Route path="lock" element={< ResetPassword/>} />
       </Route>
     </Routes>
-    <GlobalCallModal />
+    
   </Router>
-</CallProvider>
+
 );
 
 export default AppRouter;
