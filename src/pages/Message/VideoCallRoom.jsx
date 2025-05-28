@@ -15,11 +15,15 @@ const VideoCallRoom = () => {
   const peers = useRef({});
   const [remoteStreams, setRemoteStreams] = useState({});
   const [peerId, setPeerId] = useState('');
+  
+
+
+
+
 
   useEffect(() => {
     const init = async () => {
       try {
-        // Get token and userId
         const token = localStorage.getItem('token');
         const res = await axios.get('http://localhost:3009/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
@@ -27,12 +31,10 @@ const VideoCallRoom = () => {
         const userId = String(res.data.data.id);
         setPeerId(userId);
 
-        // Get media stream
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         userStream.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-        // Init peer
         const peer = new Peer(userId);
         peerInstance.current = peer;
 
@@ -46,21 +48,19 @@ const VideoCallRoom = () => {
               handleCall(call);
             }
           });
-
+         
           socket.current.on('all-users', userIds => {
-  userIds.forEach(remotePeerId => {
-    if (remotePeerId !== userId && !peers.current[remotePeerId]) {
-      setTimeout(() => {
-        const call = peer.call(remotePeerId, userStream.current);
-        handleCall(call);
-      }, 500);
-    }
-  });
-});
-
+            userIds.forEach(remotePeerId => {
+              if (remotePeerId !== userId && !peers.current[remotePeerId]) {
+                setTimeout(() => {
+                  const call = peer.call(remotePeerId, userStream.current);
+                  handleCall(call);
+                }, 500);
+              }
+            });
+          });
         });
 
-        // Listen for incoming calls
         peer.on('call', call => {
           call.answer(stream);
           handleCall(call);
@@ -107,8 +107,29 @@ const VideoCallRoom = () => {
     navigate('/');
   };
 
+  const allStreams = [
+    { id: peerId, stream: userStream.current, isLocal: true },
+    ...Object.entries(remoteStreams).map(([id, stream]) => ({ id, stream }))
+  ].slice(0, 4); // optional limit to 4 users
+
+  const gridStyle = (() => {
+    const count = allStreams.length;
+    if (count === 1) return 'grid-cols-1 grid-rows-1';
+    if (count === 2) return 'grid-cols-2 grid-rows-1';
+    if (count <= 4) return 'grid-cols-2 grid-rows-2';
+    return 'grid-cols-3 grid-rows-2'; // fallback if >4
+  })();
+ 
+
+  
+
+
+  
+
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col"
+     >
+      {/* Header */}
       <div className="p-4 flex justify-between items-center bg-gray-900">
         <div className="text-lg font-bold">Phòng: {roomId}</div>
         <button
@@ -119,40 +140,31 @@ const VideoCallRoom = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-6">
-        {/* Local Video */}
-        <div className="relative bg-gray-800 rounded overflow-hidden">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded">
-            Bạn (ID: {peerId.slice(0, 6)})
-          </div>
-        </div>
-
-        {/* Remote Videos */}
-        {Object.entries(remoteStreams).map(([id, stream]) => (
+      {/* Video Grid */}
+      <div className={`grid ${gridStyle} gap-2 flex-1 overflow-auto max-h-screen p-2`}>
+        {allStreams.map(({ id, stream, isLocal }) => (
           <div key={id} className="relative bg-gray-800 rounded overflow-hidden">
             <video
+              id={`video-${id}`}
               autoPlay
               playsInline
+              muted={isLocal}
+
               ref={(video) => {
-                if (video && !video.srcObject) {
+                if (video && stream && video.srcObject !== stream) {
                   video.srcObject = stream;
                 }
               }}
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded">
-              Khách (ID: {id.slice(0, 6)})
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
+              {isLocal ? `Bạn (ID: ${id.slice(0, 6)})` : `Khách (ID: ${id.slice(0, 6)})`}
             </div>
           </div>
         ))}
       </div>
+      
+
     </div>
   );
 };
